@@ -5,7 +5,7 @@
 (def WORDS (frequencies (re-seq #"\w+" (str/lower-case (slurp "resources/big.txt")))))
 
 (defn known [words]
-  (let [known-list (into #{} (keys WORDS))] (filter #(contains? known-list %) words)))
+  (let [known-list (into #{} (keys WORDS))] (not-empty (filter #(contains? known-list %) words))))
 
 (defn P [word]
   (cond (get WORDS word) (float (/ (get WORDS word) (reduce + (vals WORDS))))
@@ -20,11 +20,11 @@
       (map (fn [c] (str (subs word 0 i) (char c) l (subs word (inc i)) ) ) (range (int \a) (inc (int \z))))))  ; insertion
    word)))
 
+(defn edits2 [word]
+  (map #(edits1 %) (edits1 word)))
+
 (defn candidates [word]
-  (-> '()
-      (conj (known (list word)))
-      (conj (known (edits1 word)))
-      (conj (list word))))
+  (or (known (list word)) (known (edits1 word)) (known (edits2 word)) (list word)))
 
 (defn correction [word]
   (apply max-key P (flatten (candidates word))))
